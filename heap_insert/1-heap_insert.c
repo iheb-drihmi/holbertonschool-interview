@@ -1,79 +1,112 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "binary_trees.h"
 
+
 /**
-	* heap_insert - a function that inserts a value into a Max Binary Heap
-	* @root: is a pointer to the root node of the node to create
-	* @value: is the value to put in the new node
-	* Return: the new node
-*/
-
-heap_t *heap_insert(heap_t **root, int value)
+ * swap - Swap the values of two nodes
+ *
+ * @a: First node
+ * @b: Second node
+ */
+void swap(heap_t *a, heap_t *b)
 {
-	heap_t *new_node, *node;
+	int temp = a->n;
 
-	new_node = malloc(sizeof(heap_t));
+	a->n = b->n;
+	b->n = temp;
+}
 
-	if (new_node == NULL)
+/**
+ * heapify_up - Reorganizes the heap,
+ * starting from a given node, until the max heap
+ * property is respected.
+ *
+ * @node: Pointer to the inserted node
+ * Return: Node at the correct position
+ */
+heap_t *heapify_up(heap_t *node)
+{
+	while (node->parent && node->n > node->parent->n)
 	{
-		return NULL;
+		swap(node, node->parent);
+		node = node->parent;
 	}
+	return (node);
+}
 
-	node = *root;
-	/* define the new node */
-	new_node->n = value;
-	new_node->left = NULL;
-	new_node->right = NULL;
-	new_node->parent = NULL;
+/**
+ * breadth_first_insert - Inserts a new node in widthwise order.
+ * It uses a queue to store the nodes to be visited, and inserts
+ * the new node at the first available location following this order.
+ *
+ * @root: Root of the heap
+ * @value: Value to insert
+ * Return: Pointer to the inserted node
+ */
+heap_t *breadth_first_insert(heap_t *root, int value)
+{
+	heap_t **queue, *node, *new_node = NULL;
+	size_t front = 0, rear = 0, q_capacity = 1024;
 
-	if (*root == NULL) /* if no root, new node become the root */
+	queue = malloc(sizeof(*queue) * q_capacity);
+	if (!queue)
+		return (NULL);
+
+	queue[rear++] = root;
+	while (front < rear)
 	{
-		*root = new_node;
-		return (new_node);
-	}
-
-	*root = node;
-	while (node->left != NULL || node->right != NULL)
-	{
-		if (new_node->n < node->n) /* if value of new node < node value */
+		node = queue[front++];
+		if (!node->left || !node->right)
 		{
-			if (node->left == NULL) /* insert new node if left is empty */
+			new_node = binary_tree_node(node, value);
+			if (!node->left)
 			{
 				node->left = new_node;
-				new_node->parent = node;
 			}
-			else if (node->left != NULL && node->right == NULL)
+			else
 			{
 				node->right = new_node;
-				new_node->parent = node;
 			}
+			break;
 		}
-		else /*value > node new node replace it & node at left*/
-		{
-			new_node->left = node;
-			new_node->right = NULL;
-			node->parent = new_node;
-			node = new_node->left;
-		}
-		return (new_node);
-	}
-	if (node->left == NULL)
-	{
-		node->left = new_node;
-	}
-	else
-	{
-		node->right = new_node;
-	}
-	new_node->parent = node;
-	while (new_node->parent != NULL && new_node->n > new_node->parent->n)
-	{
-		int temp = new_node->n;
-		new_node->n = new_node->parent->n;
-		new_node->parent->n = temp;
-		new_node = new_node->parent;
-	}
-return (new_node);
 
+		if (rear + 2 >= q_capacity)
+		{
+			q_capacity *= 2;
+			queue = realloc(queue, sizeof(*queue) * q_capacity);
+			if (!queue)
+				return (NULL);
+		}
+
+		queue[rear++] = node->left;
+		queue[rear++] = node->right;
+	}
+
+	free(queue);
+	return (new_node);
+}
+
+/**
+ * heap_insert - inserts a new node into the heap.
+ * If the heap is empty, the new node becomes the root.
+ * Otherwise, it uses breadth_first_insert to insert the new node,
+ * then heapify_up to reorganize the heap.
+ *
+ * @root: Double pointer to the root node of the heap
+ * @value: Value to store in the node to be inserted
+ * Return: Pointer to the inserted node, or NULL on failure
+ */
+heap_t *heap_insert(heap_t **root, int value)
+{
+	if (!root)
+		return (NULL);
+
+	if (!*root)
+	{
+		*root = binary_tree_node(NULL, value);
+		return (*root);
+	}
+
+	heap_t *inserted_node = breadth_first_insert(*root, value);
+
+	return (heapify_up(inserted_node));
 }
