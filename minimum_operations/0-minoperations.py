@@ -1,32 +1,24 @@
 #!/usr/bin/python3
-
-
 """
-Calculates the minimum operations
+This script defines a function minOperations that calculate
 """
 
 
 def minOperations(n):
     """
-    Calculate the fewest number of operations needed to reach exactly n H characters.
+    Calculate the sum of prime factors of a given number.
 
-    Args:
-    - n (int): Target number of H characters.
+    Parameters:
+    - n (int): The input number
 
     Returns:
-    - int: The fewest number of operations needed.
-           If n is impossible to achieve, returns 0.
+    - int: The sum of prime factors
     """
-    if n <= 1:
-        return 0
-    
-    operations = 0
-    divisor = 2
-
-    while n > 1:
-        while n % divisor == 0:
-            operations += divisor
-            n //= divisor
-        divisor += 1
-
-    return operations
+    res = 0
+    i = 2
+    while i <= n:
+        while n % i == 0:
+            res += i
+            n = n / i
+        i += 1
+    return res
